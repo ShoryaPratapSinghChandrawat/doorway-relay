@@ -1,0 +1,41 @@
+# Environment / credentials
+.env
+.env.*
+!.env.example
+
+# Runtime data
+/data/
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Dependencies and generated output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+coverage/
+.nyc_output/
+.vite/
+*.tsbuildinfo
+
+# Local logs and secrets accidentally captured in screenshots
+*.log
+screenshots/
+private-screenshots/
+
+# Local probe reports remain private until a human reviews them
+fixtures/ring-playground/
+
+# Local handoff artifacts (generated after the approved local commit)
+doorway-relay.bundle
+doorway-relay.patch
+handoff/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

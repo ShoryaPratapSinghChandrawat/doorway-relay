@@ -1,0 +1,60 @@
+{
+  "name": "doorway-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Accountable handoffs for door events and shared spaces",
+  "engines": {
+    "node": ">=22.12 <23",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c cyan,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "tsx watch server/src/index.ts",
+    "dev:client": "vite --config client/vite.config.ts",
+    "test": "vitest run --config vitest.config.ts",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit -p server/tsconfig.json && tsc --noEmit -p client/tsconfig.json",
+    "build": "npm run typecheck && vite build --config client/vite.config.ts",
+    "db:migrate": "tsx server/src/cli/migrate.ts",
+    "seed:demo": "tsx server/src/cli/seed-demo.ts",
+    "simulate:ring": "tsx server/src/cli/simulate-ring.ts",
+    "ring:probe": "tsx server/src/cli/ring-probe.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cookie": "^1.1.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "lucide-react": "^1.59.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/supertest": "^7.2.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "jsdom": "^30.1.3",
+    "supertest": "^7.3.1",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}
