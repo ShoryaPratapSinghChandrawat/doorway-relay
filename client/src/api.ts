@@ -48,6 +48,9 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   const contentType = response.headers.get('content-type') ?? '';
   const payload: unknown = contentType.includes('application/json') ? await response.json() : null;
   if (!response.ok) {
+    if (response.status === 401) {
+      csrfToken = null;
+    }
     const failure = payload as ApiFailureShape | null;
     throw new ApiError(
       failure?.error?.message ?? 'The request could not be completed.',

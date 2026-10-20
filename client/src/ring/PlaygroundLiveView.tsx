@@ -132,7 +132,7 @@ export function PlaygroundLiveView({ enabled, selectedDeviceId, onTokenExpired }
           <Square size={13} aria-hidden="true" />{viewState === 'stopping' ? 'Stopping…' : 'Stop live view'}
         </button>
       </div>
-      <p className="playground-live-boundary">Receive-only; no recording, frame capture, snapshots, or media storage. Keep the official Ring watermark visible and unaltered. Stop the view when finished.</p>
+      <p className="playground-live-boundary">Receive-only; no recording, frame capture, snapshots, or media storage. WebRTC gathers local host candidates only without external STUN/TURN queries. Keep the official Ring watermark visible and unaltered. Stop the view when finished.</p>
     </section>
   );
 }

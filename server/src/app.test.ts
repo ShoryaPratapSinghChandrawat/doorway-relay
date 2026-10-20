@@ -164,8 +164,11 @@ describe('HTTP API auth and handoffs', () => {
   it('reports simulator evidence separately and never calls env configuration a Ring connection', async () => {
     const { agent } = await authenticatedApp();
     const status = await agent.get('/api/ring/status');
+    expect(status.headers['cache-control']).toBe('no-store');
     expect(status.body.state).toBe('not_connected');
     expect(status.body.connected).toBe(false);
+    const overview = await agent.get('/api/overview');
+    expect(overview.headers['cache-control']).toBe('no-store');
   });
 
   it('verifies Playground access server-side without exposing the token in API responses', async () => {

@@ -172,6 +172,7 @@ export function createApp({ db, config, fetcher }: AppDependencies): DoorwayApp 
       response.status(503).json({ status: 'unavailable' });
     }
   });
+  app.use('/api', noStoreResponse);
   app.use('/api', attachSession(db, config));
 
   const ringTokenStore = new RingTokenStore(db, config.tokenEncryptionKey);
