@@ -70,8 +70,7 @@ Doorway Relay transforms door events and manual tasks into structured, accountab
 
 ### "New & Existing" Projects Disclosure
 **How the project was significantly updated during the hackathon window:**  
-[OWNER TO WRITE — REQUIRED BEFORE SUBMISSION]  
-*Note for owner: Because the Git history shows an import commit (`919083e`) onto the initial base (`28f9d2f`), you must write your own specific explanation here describing how the project was created and/or significantly updated between August 31, 2026 and October 23, 2026.*
+Doorway Relay was built during the submission period (31 Aug – 23 Oct 2026). It is a full-stack app: a React/TypeScript client and an Express/TypeScript API with SQLite storage, cookie sessions, CSRF/origin protection, versioned migrations, and a persistent event → inbox → handoff workflow with an audit trail. During the period I added Ring integration paths: OAuth and account-linking code, HMAC-verified webhooks, a server-side Playground client with device listing, a privacy-redacting probe CLI, and an optional receive-only WHEP live-view panel. I also built a local signed event simulator, clearly labelled 'Local · Simulated', so the workflow can be demonstrated without claiming it is Ring's official simulator. The final stretch added a hermetic test suite (26 files, 137 tests), a secret-scanning script, security fixes (fail-closed production key checks, explicit event-source labelling, no-store caching on API routes), and a static GitHub Pages showcase. Ring Event History ingestion and Sync are intentionally disabled until real Playground response data has been reviewed.
 
 ---
 
@@ -98,9 +97,7 @@ https://github.com/ShoryaPratapSinghChandrawat/doorway-relay
 ---
 
 ### Project Website URL ("Try It" Link)
-PENDING — owner to add
-
-*(Note: Expected static showcase link upon owner enabling GitHub Actions Pages: `https://shoryapratapsinghchandrawat.github.io/doorway-relay/`)*
+https://shoryapratapsinghchandrawat.github.io/doorway-relay/
 
 ---
 

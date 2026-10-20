@@ -72,7 +72,7 @@ No reviewed redacted probe report exists in the workspace (`Ring evidence BLOCKE
 - Devpost hackathon rules: August 31, 2026 – October 23, 2026, 12:00 PM PDT (= October 24, 2026, 00:30 IST).
 - Primary Track: Ring.
 - Mini Challenges: Open Source is **MET** (finalized MIT license held by Shorya Pratap Singh Chandrawat on public repository); AWS Builder explicitly **NOT CLAIMED** (zero AWS calls in codebase).
-- New & Existing: **PARTIAL (Owner Action Required)**: Because the Git history shows an import commit (`919083e`) onto the initial base (`28f9d2f`), the explanation of how the project was significantly updated during the hackathon window must be written by the owner (placeholder added in `submission/DEVPOST_PASTE_READY.md`).
+- New & Existing: **MET (Owner-supplied statement)**: The owner provided the comprehensive explanation in `submission/DEVPOST_PASTE_READY.md` detailing the full-stack architecture, Ring integration paths, local simulator, hermetic tests, security fixes, and static showcase built between 31 Aug and 23 Oct 2026.
 - Reviewers: The Rules and FAQ pages list the Amazon reviewer accounts `knmeiss`, `giolaq`, `anishamalde`, `mosesroth`, `emersonsklar` and the Devpost email `testing@devpost.com`. Because the repository is confirmed public, collaboration invitations are not required.
 - Unverified/ambiguous items: Event History response envelope in Playground; inbound Token Exchange callback contract.
 
@@ -83,9 +83,9 @@ No reviewed redacted probe report exists in the workspace (`Ring evidence BLOCKE
 - Architecture: Built as a standalone, dependency-free static showcase in `site/` (plain semantic HTML5, CSS3, vanilla JavaScript).
 - Includes: Hero section, problem vs solution, architecture SVG diagram, evidence truth table, judge local-run guide, and an interactive in-browser state-machine simulator.
 - Persistent Banner: *"Static preview with synthetic data — not the full application and not a live Ring connection"*.
-- Deployment Workflow: `.github/workflows/pages.yml` created with official actions (`actions/checkout@v4`, `actions/configure-pages@v5`, `actions/upload-pages-artifact@v3`, `actions/deploy-pages@v4`) and minimal permissions (`contents: read`, `pages: write`, `id-token: write`).
-- Local Test: Served locally on port 8085; verified HTTP 200, clean layout, mobile-first responsiveness (375x812), and zero console errors.
-- Target URL: `https://shoryapratapsinghchandrawat.github.io/doorway-relay/` (Expected, NOT verified until owner enables Pages in repository settings).
+- Deployment Workflow: `.github/workflows/pages.yml` executed and succeeded (`completed success`).
+- Status & Live Verification: **LIVE & VERIFIED (HTTP 200)** at `https://shoryapratapsinghchandrawat.github.io/doorway-relay/`. Content confirmed identical to `site/index.html` (27,587 bytes).
+
 
 ---
 

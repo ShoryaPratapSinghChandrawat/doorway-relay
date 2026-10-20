@@ -112,7 +112,7 @@ There is no production API start/build package, service/container definition, ap
 
 ## Submission and repository status
 
-This is not submission-ready. The supplied schedule and Devpost deadline have not been independently re-verified. No screenshots, public video, reviewer invitations, Ring evidence, or submission are claimed here. `LICENSE` remains unchanged pending the owner's copyright-holder and license choice (MIT template). The public project website ("Try it" link) is expected at `https://shoryapratapsinghchandrawat.github.io/doorway-relay/` once enabled in GitHub repository settings by the owner (currently pending deployment). No push, visibility change, release, invitation, or Devpost publication was performed; publication requires separate owner authorization. See [`submission/FINAL_CHECKLIST.md`](submission/FINAL_CHECKLIST.md).
+This is not submission-ready. The supplied schedule and Devpost deadline have not been independently re-verified. No screenshots, public video, reviewer invitations, Ring evidence, or submission are claimed here. `LICENSE` is finalized as MIT (held by Shorya Pratap Singh Chandrawat). The public project website ("Try it" link) is live at https://shoryapratapsinghchandrawat.github.io/doorway-relay/ . See [`submission/FINAL_CHECKLIST.md`](submission/FINAL_CHECKLIST.md).
 
 ## Project docs
 
