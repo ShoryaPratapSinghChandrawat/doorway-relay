@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doorway Relay — Accountable handoffs for door events and shared spaces</title>
+  <meta name="description" content="Accountable handoffs for door events and shared spaces. React 19, Node.js 22, Express 5, and SQLite. Amazon Developer Hackathon (Ring Track).">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-border: #1f2937;
+      --surface-hover: #1e293b;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --badge-sim-bg: #451a03;
+      --badge-sim-text: #fcd34d;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-border: #e2e8f0;
+        --surface-hover: #f1f5f9;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --badge-sim-bg: #fef3c7;
+        --badge-sim-text: #92400e;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sticky Static Notice Banner */
+    .banner {
+      background-color: #78350f;
+      color: #fef3c7;
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* Nav */
+    header {
+      border-bottom: 1px solid var(--surface-border);
+      padding: 1rem 0;
+    }
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 0.9rem;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      font-size: 0.9rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* Hero */
+    .hero {
+      padding: 4rem 0 3rem;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 9999px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .hero h1 {
+      font-size: 2.75rem;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto 2rem;
+    }
+    .cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: var(--surface);
+      border-color: var(--surface-border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: var(--surface-hover); }
+
+    /* Cards & Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+    }
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Interactive Demo Box */
+    .demo-section {
+      margin: 4rem 0;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .demo-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .demo-body {
+      padding: 1.75rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 768px) {
+      .demo-body { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+    }
+    .inbox-item {
+      background: rgba(0,0,0,0.15);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .prov-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--badge-sim-bg);
+      color: var(--badge-sim-text);
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+    .item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .item-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .timeline {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      background: rgba(0,0,0,0.3);
+      padding: 1rem;
+      border-radius: 8px;
+      height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--surface-border);
+    }
+    .timeline-entry { margin-bottom: 0.5rem; color: #a3e635; }
+    .timeline-time { color: var(--text-muted); }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 1.5rem 0 3rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+    th, td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--surface-border);
+    }
+    th {
+      background: rgba(255,255,255,0.03);
+      font-weight: 600;
+    }
+    code {
+      font-family: var(--mono);
+      background: rgba(255,255,255,0.08);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    /* Architecture Diagram */
+    .arch-container {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0 3rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    footer {
+      border-top: 1px solid var(--surface-border);
+      padding: 3rem 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Persistent Banner -->
+  <div class="banner">
+    Static preview with synthetic data — not the full application and not a live Ring connection
+  </div>
+
+  <div class="container">
+    <header>
+      <nav class="nav-row" aria-label="Main Navigation">
+        <div class="brand">
+          <span class="brand-icon">DR</span>
+          Doorway Relay
+        </div>
+        <ul class="nav-links">
+          <li><a href="#problem">Problem & Solution</a></li>
+          <li><a href="#interactive-demo">Interactive Demo</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#evidence">Evidence Truth</a></li>
+          <li><a href="#run-locally">Run Locally</a></li>
+          <li><a href="https://github.com/ShoryaPratapSinghChandrawat/doorway-relay" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <span class="badge">Amazon Developer Hackathon · Ring Track</span>
+        <h1>Accountable handoffs for door events and shared spaces</h1>
+        <p>
+          Smart doorbells alert everyone at once, creating diffusion of responsibility. Doorway Relay turns doorbell presses and motion triggers into accountable, assignable handoffs with explicit state progression and SQLite audit trails.
+        </p>
+        <div class="cta-group">
+          <a href="#interactive-demo" class="btn btn-primary">Try Interactive Simulator</a>
+          <a href="#run-locally" class="btn btn-secondary">Judge Quick Start</a>
+          <a href="https://github.com/ShoryaPratapSinghChandrawat/doorway-relay" class="btn btn-secondary" target="_blank" rel="noopener">Source Code</a>
+        </div>
+      </section>
+
+      <!-- Problem vs Solution -->
+      <section id="problem">
+        <div class="grid-2">
+          <div class="card">
+            <h3>⚠️ The Problem: Alert Fatigue & Inaction</h3>
+            <p>
+              In family homes, co-living buildings, or elder care settings, an entrance notification buzzes every phone. Everyone assumes someone else handled it. Deliveries sit unattended on porches, visitors wait, and critical door events go unacknowledged.
+            </p>
+          </div>
+          <div class="card">
+            <h3>✅ The Solution: Accountable Handoffs</h3>
+            <p>
+              Door events flow into a unified, neutral triage inbox. Team members explicitly claim tasks, assign owners, acknowledge receipt, and resolve issues with mandatory notes. State is strictly tracked from new to assigned, acknowledged, and resolved.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Interactive In-Browser Demo -->
+      <section id="interactive-demo" class="demo-section">
+        <div class="demo-header">
+          <div>
+            <h3>In-Browser State Machine Simulator</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);">
+              Exercises the core inbox &rarr; claim &rarr; acknowledge &rarr; resolve journey in-memory.
+            </p>
+          </div>
+          <button id="btn-trigger" class="btn btn-primary" style="font-size:0.85rem; padding:0.5rem 1rem;">
+            + Trigger Simulated Doorbell Press
+          </button>
+        </div>
+        <div class="demo-body">
+          <div>
+            <h4 style="margin-bottom:1rem; font-size:1rem;">Active Tasks & Triage Inbox</h4>
+            <div id="tasks-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+          <div>
+            <h4 style="margin-bottom:1rem; font-size:1rem;">Append-Only SQLite Audit Trail</h4>
+            <div id="timeline" class="timeline">
+              <div class="timeline-entry"><span class="timeline-time">[System]</span> Simulator initialized with synthetic in-memory state.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Architecture Diagram (Inline SVG) -->
+      <section id="architecture">
+        <h2 style="font-size:1.75rem; margin-bottom:1rem; text-align:center;">System Architecture</h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:650px; margin:0 auto 2rem;">
+          Designed with strict security boundaries: server-only credentials, bounded data shapes, rate-limiting, and constant-time HMAC validation.
+        </p>
+        <div class="arch-container">
+          <svg viewBox="0 0 800 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="max-width:760px; font-family:var(--font);">
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1e3a8a"/>
+                <stop offset="100%" stop-color="#1e40af"/>
+              </linearGradient>
+              <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#065f46"/>
+                <stop offset="100%" stop-color="#047857"/>
+              </linearGradient>
+            </defs>
+
+            <!-- External Event Sources -->
+            <rect x="20" y="50" width="170" height="110" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <text x="105" y="80" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="700">EVENT SOURCES</text>
+            <rect x="35" y="95" width="140" height="25" rx="4" fill="#334155"/>
+            <text x="105" y="112" text-anchor="middle" fill="#f8fafc" font-size="11">Ring Developer Playground</text>
+            <rect x="35" y="125" width="140" height="25" rx="4" fill="#451a03"/>
+            <text x="105" y="142" text-anchor="middle" fill="#fde68a" font-size="11">Local Signed Simulator</text>
+
+            <!-- Arrows to Server -->
+            <path d="M 190 105 L 260 105" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="225" y="95" text-anchor="middle" fill="#64748b" font-size="9">HMAC / WHEP</text>
+
+            <!-- Express API Backend -->
+            <rect x="260" y="30" width="260" height="290" rx="10" fill="url(#grad1)" stroke="#3b82f6" stroke-width="1.5"/>
+            <text x="390" y="60" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">Doorway Relay Server (Node 22 / Express 5)</text>
+
+            <rect x="280" y="80" width="220" height="40" rx="6" fill="#0f172a" stroke="#1e293b"/>
+            <text x="390" y="105" text-anchor="middle" fill="#cbd5e1" font-size="11">Raw HMAC Webhook & Nonce Gate</text>
+
+            <rect x="280" y="130" width="220" height="40" rx="6" fill="#0f172a" stroke="#1e293b"/>
+            <text x="390" y="155" text-anchor="middle" fill="#cbd5e1" font-size="11">Handoff State Machine Engine</text>
+
+            <rect x="280" y="180" width="220" height="40" rx="6" fill="#0f172a" stroke="#1e293b"/>
+            <text x="390" y="205" text-anchor="middle" fill="#cbd5e1" font-size="11">Receive-Only WHEP Session Relay</text>
+
+            <rect x="280" y="235" width="220" height="65" rx="6" fill="url(#grad2)" stroke="#10b981"/>
+            <text x="390" y="258" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700">SQLite (better-sqlite3)</text>
+            <text x="390" y="278" text-anchor="middle" fill="#d1fae5" font-size="10">Migrations 001-003 · Foreign Keys</text>
+            <text x="390" y="292" text-anchor="middle" fill="#d1fae5" font-size="9">Append-Only Immutable Activity</text>
+
+            <!-- Arrows to Client -->
+            <path d="M 520 150 L 590 150" stroke="#64748b" stroke-width="2"/>
+            <text x="555" y="140" text-anchor="middle" fill="#64748b" font-size="9">CSRF / JSON</text>
+
+            <!-- Client Application -->
+            <rect x="590" y="50" width="180" height="240" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <text x="680" y="80" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="700">CLIENT (React 19 / Vite)</text>
+
+            <rect x="605" y="100" width="150" height="30" rx="4" fill="#0f172a"/>
+            <text x="680" y="120" text-anchor="middle" fill="#f8fafc" font-size="11">Triage Inbox</text>
+
+            <rect x="605" y="140" width="150" height="30" rx="4" fill="#0f172a"/>
+            <text x="680" y="160" text-anchor="middle" fill="#f8fafc" font-size="11">Lifecycle Dashboard</text>
+
+            <rect x="605" y="180" width="150" height="30" rx="4" fill="#0f172a"/>
+            <text x="680" y="200" text-anchor="middle" fill="#f8fafc" font-size="11">Activity Audit Trail</text>
+
+            <rect x="605" y="220" width="150" height="50" rx="4" fill="#0f172a"/>
+            <text x="680" y="240" text-anchor="middle" fill="#fde68a" font-size="10">Playground Live View</text>
+            <text x="680" y="255" text-anchor="middle" fill="#94a3b8" font-size="8">(Mandatory Watermark)</text>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Evidence Truth Table -->
+      <section id="evidence">
+        <h2 style="font-size:1.75rem; margin-bottom:1rem; text-align:center;">Evidence Truth Matrix</h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:650px; margin:0 auto 2rem;">
+          In strict adherence to hackathon ethics, Doorway Relay clearly labels all data provenances and never represents synthetic tests as live Ring hardware.
+        </p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Provenance Label</th>
+                <th>UI Badge</th>
+                <th>Source & Implementation</th>
+                <th>Verification Status in Repo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>ring_playground</code></td>
+                <td><span class="prov-tag" style="background:#1e3a8a; color:#93c5fd;">Playground · Simulated</span></td>
+                <td>Server-side Ring Developer Playground API client & receive-only WHEP live-view relay.</td>
+                <td>Hermetic test suite passed (26 files / 137 tests with mocked endpoints & fake WebRTC peers). Live credentials pending owner review.</td>
+              </tr>
+              <tr>
+                <td><code>ring_simulated</code></td>
+                <td><span class="prov-tag">Local · Simulated</span></td>
+                <td>Local HMAC-signed synthetic webhook generator delivered to <code>/api/ring/webhook</code>.</td>
+                <td>Fully verified via <code>npm run simulate:ring</code> against running Express API. Not Ring-issued.</td>
+              </tr>
+              <tr>
+                <td><code>manual</code></td>
+                <td><span class="prov-tag" style="background:#1f2937; color:#e5e7eb;">Manual Task</span></td>
+                <td>Operator-created tasks in shared workspace.</td>
+                <td>Verified end-to-end with validation, assignment, acknowledgement, and resolution notes.</td>
+              </tr>
+              <tr>
+                <td><code>isSynthetic: 1</code></td>
+                <td><span class="prov-tag" style="background:#374151; color:#d1d5db;">Synthetic demo data</span></td>
+                <td>Pre-seeded demonstration items for 3 workspace users.</td>
+                <td>Seeded via <code>npm run seed:demo</code>; distinct from live items.</td>
+              </tr>
+              <tr>
+                <td><code>ring_live</code></td>
+                <td><span class="prov-tag" style="background:#4b5563; color:#f3f4f6;">Live Ring</span></td>
+                <td>Real Ring devices and production Ring API.</td>
+                <td>Not configured or claimed in this candidate repository.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Run Locally for Judges -->
+      <section id="run-locally">
+        <h2 style="font-size:1.75rem; margin-bottom:1rem; text-align:center;">Judge Run-Locally Guide</h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:650px; margin:0 auto 2rem;">
+          Run Doorway Relay locally in under 3 minutes with pre-seeded demo credentials and our local event simulator.
+        </p>
+        <div class="card" style="margin-bottom:2rem;">
+          <h3 style="margin-bottom:1rem;">1. Clone & Install Dependencies</h3>
+          <p style="margin-bottom:0.75rem;">Requires Node.js 22 (<a href="https://nodejs.org" target="_blank" rel="noopener">v22.12–v22.x</a>) and npm 10+:</p>
+          <pre style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:6px; overflow-x:auto; font-family:var(--mono); font-size:0.85rem; margin-bottom:1.5rem;"><code>git clone https://github.com/ShoryaPratapSinghChandrawat/doorway-relay.git
+cd doorway-relay
+npm ci --ignore-scripts</code></pre>
+
+          <h3 style="margin-bottom:1rem;">2. Configure Local Environment</h3>
+          <pre style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:6px; overflow-x:auto; font-family:var(--mono); font-size:0.85rem; margin-bottom:1rem;"><code># Windows PowerShell:
+Copy-Item .env.example .env
+
+# macOS / Linux:
+cp .env.example .env</code></pre>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">
+            Generate random keys for <code>SESSION_SECRET</code>, <code>TOKEN_ENCRYPTION_KEY</code>, and <code>RING_SIMULATOR_HMAC_KEY</code> with <code>node -p "require('node:crypto').randomBytes(32).toString('hex')"</code> and set a <code>DEMO_PASSWORD</code> of at least 12 characters.
+          </p>
+
+          <h3 style="margin-bottom:1rem;">3. Initialize SQLite & Seed Demo Items</h3>
+          <pre style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:6px; overflow-x:auto; font-family:var(--mono); font-size:0.85rem; margin-bottom:1.5rem;"><code>npm run db:migrate
+npm run seed:demo</code></pre>
+
+          <h3 style="margin-bottom:1rem;">4. Start Application</h3>
+          <pre style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:6px; overflow-x:auto; font-family:var(--mono); font-size:0.85rem; margin-bottom:1.5rem;"><code>npm run dev</code></pre>
+          <p style="font-size:0.85rem; color:var(--text-muted);">
+            Open <code>http://localhost:5173</code> and log in as <code>demo@doorway.local</code> with your configured password.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p style="margin-bottom:0.5rem;">Doorway Relay — Amazon Developer Hackathon Submission Candidate (Ring Track)</p>
+      <p style="font-size:0.8rem;">
+        Open-source under MIT License (Copyright holder confirmation pending owner input) · 
+        <a href="https://github.com/ShoryaPratapSinghChandrawat/doorway-relay" style="color:var(--primary); text-decoration:none;" target="_blank" rel="noopener">GitHub Repository</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // In-Memory Interactive Demo State Machine
+    (function() {
+      const tasks = [
+        {
+          id: 'task-1',
+          summary: 'Package delivery at main entryway',
+          category: 'delivery',
+          status: 'new',
+          owner: null,
+          provenance: 'Local · Simulated',
+          created: '2 mins ago'
+        },
+        {
+          id: 'task-2',
+          summary: 'Check side entrance latch after motion',
+          category: 'access',
+          status: 'assigned',
+          owner: 'Sam (Carer)',
+          provenance: 'Local · Simulated',
+          created: '15 mins ago'
+        }
+      ];
+
+      const tasksContainer = document.getElementById('tasks-container');
+      const timeline = document.getElementById('timeline');
+      const btnTrigger = document.getElementById('btn-trigger');
+
+      function logTimeline(msg) {
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = 'timeline-entry';
+        entry.innerHTML = `<span class="timeline-time">[${time}]</span> ${msg}`;
+        timeline.prepend(entry);
+      }
+
+      function renderTasks() {
+        tasksContainer.innerHTML = '';
+        if (tasks.length === 0) {
+          tasksContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No active tasks. Trigger a door event above!</p>';
+          return;
+        }
+
+        tasks.forEach(t => {
+          const div = document.createElement('div');
+          div.className = 'inbox-item';
+
+          let actionsHtml = '';
+          if (t.status === 'new') {
+            actionsHtml = `<button class="btn btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.7rem;" onclick="claimTask('${t.id}')">Claim Task</button>`;
+          } else if (t.status === 'assigned') {
+            actionsHtml = `<button class="btn btn-primary" style="font-size:0.75rem; padding:0.35rem 0.7rem;" onclick="ackTask('${t.id}')">Acknowledge</button>`;
+          } else if (t.status === 'acknowledged') {
+            actionsHtml = `<button class="btn btn-primary" style="font-size:0.75rem; padding:0.35rem 0.7rem; background:var(--success); border-color:var(--success);" onclick="resolveTask('${t.id}')">Resolve Task</button>`;
+          } else {
+            actionsHtml = `<span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ Resolved</span>`;
+          }
+
+          div.innerHTML = `
+            <div>
+              <span class="prov-tag">${t.provenance}</span>
+              <span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-left:0.5rem;">[${t.status}]</span>
+            </div>
+            <div class="item-title">${t.summary}</div>
+            <div class="item-meta">Category: ${t.category} · Owner: ${t.owner || 'Unassigned'} · Created: ${t.created}</div>
+            <div style="display:flex; justify-content:flex-end;">${actionsHtml}</div>
+          `;
+          tasksContainer.appendChild(div);
+        });
+      }
+
+      window.claimTask = function(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+          task.status = 'assigned';
+          task.owner = 'Alex (You)';
+          logTimeline(`Handoff <code>${task.id}</code> claimed and assigned to <strong>Alex (You)</strong>. Status changed: <code>new</code> &rarr; <code>assigned</code>.`);
+          renderTasks();
+        }
+      };
+
+      window.ackTask = function(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+          task.status = 'acknowledged';
+          logTimeline(`Handoff <code>${task.id}</code> acknowledged by <strong>Alex (You)</strong>. In-progress timer active.`);
+          renderTasks();
+        }
+      };
+
+      window.resolveTask = function(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+          task.status = 'resolved';
+          logTimeline(`Handoff <code>${task.id}</code> resolved with note: <em>"Package brought inside and placed in common area."</em>`);
+          renderTasks();
+        }
+      };
+
+      btnTrigger.addEventListener('click', function() {
+        const newId = 'task-' + (tasks.length + 1);
+        const eventNames = [
+          'Doorbell button pressed at Front Porch',
+          'Human motion detected near Side Gate',
+          'Door sensor triggered at Common Room'
+        ];
+        const randomEvent = eventNames[Math.floor(Math.random() * eventNames.length)];
+        tasks.unshift({
+          id: newId,
+          summary: randomEvent,
+          category: 'visitor',
+          status: 'new',
+          owner: null,
+          provenance: 'Local · Simulated',
+          created: 'Just now'
+        });
+        logTimeline(`Simulated Ring webhook received: <code>${randomEvent}</code> (signed with local test HMAC). Created neutral inbox item <code>${newId}</code>.`);
+        renderTasks();
+      });
+
+      renderTasks();
+    })();
+  </script>
+</body>
+</html>
