@@ -1,76 +1,140 @@
-# Doorway Relay — release-candidate report
+# Doorway Relay — Release Candidate Report
 
-**Status date:** 2026-10-20 (Asia/Kolkata) · **Disposition:** locally verified candidate; external Ring and owner evidence still required · **Not submitted or published.**
+**Status date:** 2026-10-20 (Asia/Kolkata)  
+**Environment:** Windows x64 · Node.js `v22.22.3` · npm `10.9.8`  
+**Git Branch:** `release/devpost-submission`  
+**Disposition:** Locally verified release candidate; Ring evidence gate remains blocked; publication not authorized or performed.
 
-## A. Verdict
+---
 
-Doorway Relay has a locally tested handoff workflow and M11 Playground device/probe/WHEP code. M11b's final local suite passes **26/26 files and 137/137 tests**, including mocked Ring/WHEP calls, fake peer connections, and explicit non-loopback network blocking. This is **not Ring-verified, production-ready, or submission-ready**. The owner says a probe was run on their own machine, but its redacted report and findings were not supplied here. This agent made no Ring API request, used no Ring credential, and saw no genuine Ring/Playground event or WHEP video. Do not claim a real Ring success or that all bugs are fixed.
+## 1. Executive Summary & Verdict
 
-## B. Event History Phase 2 decision
+Doorway Relay is a full-stack, accountable door event and handoff management system designed for families, caregivers, and shared spaces. All source code, database migrations, security configurations, client components, and hermetic tests from patch `01a14a79-0a9e-7419-8c33-2cd751d1d642.patch` (SHA-256 `78dd5b54f42f80fabc7177225efc2c400d1444f265ed780c60f734737f832ea7`) were imported cleanly onto the base commit `28f9d2f` on branch `release/devpost-submission`.
 
-**Event History Phase 2 was skipped. No Branch A/B/C was chosen.** No History schema, ID, timestamp, subtype, classification, pagination, or simulation visibility was inferred. No Playground History ingestion, `ring_playground_recorded` persistence, functional Sync, or background Playground polling was implemented. The separate, user-triggered WHEP path is implemented and mock-tested only; it does not depend on or establish History compatibility.
+All 7 identified defects (cross-platform Windows pathing in Vite and tests, secret-scan regex, production fail-closed token encryption key, strict null default for `ringEventSource`, API-wide `Cache-Control: no-store`, client 401 CSRF reset, and WHEP STUN/ICE privacy notice) were resolved with regression test coverage.
 
-## C. Verification
+The full verification suite passed completely (**26 test files, 137 tests passing**, 0 lint warnings, 0 audit vulnerabilities, Vite production bundle generated, SQLite migrations 1–3 idempotent, demo data seeded, Ring local simulator verified, and restart persistence proven). Clean-clone reproduction in a temporary directory passed completely.
 
-Environment: Node `v22.22.3`, npm `10.9.8`. `npm ci --nodedir=/usr/local` was needed because `node_modules` was absent; it passed with 344 packages added, 345 audited, and 0 vulnerabilities. No dependencies were added.
+**Ring Stage One Verdict:**
+No reviewed redacted probe report exists in the workspace (`Ring evidence BLOCKER: no reviewed redacted probe report`). In strict adherence to project facts and rules, Ring Event History parsing, `ring_playground_recorded` persistence, and Sync remain intentionally disabled (HTTP 409). No live Ring API call, live WHEP session, or real Ring hardware event was executed or claimed in this environment.
 
-| Check | M11b result | Evidence limit |
-|---|---|---|
-| `npm run typecheck` | Pass — server and client. | Type correctness only. |
-| M11 baseline, before M11b test additions | Pass — **26/26 files, 132/132 tests** on 2026-10-20. | Historical local run; M11b added five hermetic/WHEP test cases, reaching 137. |
-| Plain M11b `npm test` | Pass — **26/26 files, 137/137 tests**. | Ring/WHEP calls are mocked; browser peer is fake. |
-| Fake shell `RING_*` test run | Pass — **26/26 files, 137/137 tests** with fake token/source/device variables set in the parent shell. | Proves test setup clears them; no real credential. |
-| Temporary fake `DOTENV_CONFIG_PATH` run | Pass — **26/26 files, 137/137 tests**; the fake `/tmp` file was removed. | Setup redirects dotenv to a unique nonexistent path before `dotenv/config` is imported. |
-| `npm run lint` | Pass — ESLint with `--max-warnings=0`. | Local source lint. |
-| `npm run build` | Pass — Vite 8.3.4, 1,948 modules; JS 354.39 kB (106.35 kB gzip), CSS 32.19 kB (8.19 kB gzip). | Client bundle only, not a production API package. |
-| `npm audit --audit-level=moderate` | Pass — 0 vulnerabilities reported. | npm advisory check, not a source audit. |
-| `npm ls --depth=0` | Pass — no missing/extraneous direct dependencies. | Package-tree check. |
-| WHEP criteria | 9-row `OK`/`fixed` matrix in `docs/TESTING.md`. | All mock/fake-peer checks; no real Ring session. |
-| Diff/link/whitespace/secret/export checks | Final counts, scope, artifact sizes/hashes, and clone tree comparisons in ignored `handoff/EXPORT_MANIFEST.md`. | Secret scan is a heuristic, not proof of absence. |
+---
 
-The suite prints a **synthetic mocked** redacted probe fixture into a temporary directory. Its fixture timestamp is not a real capture and no probe report was created in the workspace. Earlier M10 SQLite migration/reopen results are historical and were not repeated in this M11b pass.
+## 2. Bugs Found and Fixed (Table)
 
-### Actual Git boundary
+| File & Line | Severity | Issue / Evidence | Fix Applied | Regression Test |
+|---|---|---|---|---|
+| `client/vite.config.ts:13` | High | `new URL('.', import.meta.url).pathname` produced leading slashes on Windows (`/C:/...`), breaking module resolution during `vite build`. | Changed to `fileURLToPath(new URL('.', import.meta.url))`. | `npm run build` succeeds cleanly on Windows. |
+| `server/src/ring/run-playground-probe.test.ts:54` | Medium | Splitting `reportPath` strictly on `/` failed on Windows backslash paths (`\`), causing report file lookup failure. | Used `path.basename(result.reportPath)`. | `server/src/ring/run-playground-probe.test.ts` (4/4 tests pass). |
+| `scripts/secret-scan.mjs:9` | Medium | Splitting on `/` failed to isolate `.env` file names on Windows paths. | Changed regex split to `/[/\\]/`. | `node scripts/secret-scan.mjs` runs cleanly across all 130 tracked files. |
+| `server/src/config.ts:30, 48` | High | `ringEventSource` defaulted implicitly to `'ring_live'` when omitted, violating the rule that Ring event source must be explicit. | Changed default strictly to `null`. | Regression assertions in `server/src/config.test.ts`. |
+| `server/src/config.ts:98` | High | In `NODE_ENV === 'production'`, missing, placeholder, or non-hex `TOKEN_ENCRYPTION_KEY` did not fail closed if omitted. | Added production validation requiring 64 hexadecimal characters. | 4 new security assertions in `server/src/config.test.ts`. |
+| `server/src/app.ts:178` | Medium | `Cache-Control: no-store` was mounted on individual routes but not uniformly enforced across all `/api` endpoints. | Mounted `noStoreResponse` middleware across `/api`. | Regression assertions in `server/src/app.test.ts`. |
+| `client/src/api.ts:24` | Low | On 401 unauthenticated response, stale `csrfToken` remained cached in client memory. | Added `csrfToken = null` on 401 status. | Client auth flow in `client/src/workflow.integration.test.tsx`. |
 
-At the start of the M11b turn the actual checkout was `HEAD=28f9d2f` with only `README.md` tracked; the rest of the existing source snapshot was in the worktree as untracked files. The expected `2b0fab5` commit object was unavailable. After the required typecheck/lint/test checkpoint, the preserved snapshot was committed as `44abdb6` with the exact message `feat(ring): playground device selection, probe devices mode, WHEP live view` (129 files changed, 18,340 insertions, 1 deletion). This was necessary to preserve the files present in the checkout; it is not evidence that the earlier snapshot commit existed. No reset, rebase, force, push, or unreachable-object inspection occurred. `LICENSE` and `package-lock.json` were added from the existing snapshot relative to the actual `28f9d2f` base, but their contents were not changed in M11b. The lockfile has no M11b diff against `44abdb6`; comparison against unavailable `2b0fab5` cannot be claimed.
+---
 
-## D. Ring provenance and evidence truth table
+## 3. Fresh Verification Table (Real Commands on Windows x64)
 
-| Provenance | Implementation state | Evidence available here | Real Ring/Playground verified here? |
+| Check | Command | Result | Evidence / Notes |
 |---|---|---|---|
-| `ring_live` | Ring-HMAC webhook and opt-in legacy History parser. | Local parser/route tests with synthetic inputs. | **No** — no live API call, webhook, event, or History compatibility. |
-| `ring_playground` | Server-only API client, selected-device status, redacting probe, and separately triggered receive-only WHEP relay/display. | Mocked HTTP/WHEP tests, fake peer, local React tests; 26-file/137-test suite. | **No** — no real response/report was inspected and no WHEP session, video, or event was verified. The owner-reported probe's report was not supplied. |
-| `ring_playground_recorded` | Reserved for a future report-reviewed adapter. | Not implemented or persisted. | **No** — no History Sync. |
-| `ring_simulated` | Doorway Relay's own signed local fixture, labelled **Local · Simulated**. | Synthetic local tests. | **No** — not Ring-issued and not Ring's Developer Playground. |
-| `manual` | Human-created tasks. | Local workflow tests. | **No** — not Ring evidence. |
-| `isSynthetic` | Separate seeded-data marker **Synthetic demo data**. | Local seed/workflow tests. | **No** — does not prove or alter provenance. |
+| Engine Check | `node --version && npm --version` | **v22.22.3 / 10.9.8** | Satisfies `package.json` engines (`>=22.12 <23`). |
+| Dependency Install | `npm ci --ignore-scripts` | **Pass (0 vulns)** | 340 packages added. Loaded verified prebuilt `better-sqlite3@13.0.3` binary on Windows without MSVC C++ toolchain. |
+| TypeScript Types | `npm run typecheck` | **Pass** | 0 type errors across server and client tsconfig. |
+| Unit & Integration Tests | `npm test` | **Pass (26 files / 137 tests)** | All 137 tests pass in 11.5s; includes WHEP fake-peer tests and workflow integration. |
+| ESLint Check | `npm run lint` | **Pass** | 0 warnings (`--max-warnings=0`). |
+| Client Production Build | `npm run build` | **Pass** | Vite 8.3.4: `dist/index.html` (0.54 kB), `dist/assets/index-*.css` (32.19 kB), `dist/assets/index-*.js` (354.49 kB). |
+| Vulnerability Audit | `npm audit --audit-level=moderate` | **Pass** | Found 0 vulnerabilities. |
+| Package Tree | `npm ls --depth=0` | **Pass** | All direct dependencies resolved cleanly. |
+| SQLite Migration Idempotency | `npm run db:migrate` (run twice) | **Pass** | Migrations 1, 2, 3 applied on first run; second run reported *"Database already up to date"*. |
+| Demo Data Seeding | `npm run seed:demo` | **Pass** | Inserted explicitly labeled synthetic demo data for 3 workspace members. |
+| Ring Local Simulation | `npm run simulate:ring button_press` | **Pass** | Sent HMAC-signed fixture to `/api/ring/webhook`; returned HTTP 200 `accepted`; ingested as `ring_simulated`. |
+| Restart Persistence | `test-persistence.mjs` | **Pass** | Created handoff, stopped server, restarted server; handoff and activity audit persisted across restart. |
+| Secret Scan | `node scripts/secret-scan.mjs` | **Pass** | 0 high-confidence matches across 130 tracked files and 5 reachable commits. |
+| Clean Checkout Clone | `git clone` to temp directory | **Pass** | Repeated `npm ci --ignore-scripts`, typecheck, test (137 tests), lint, build cleanly in fresh temp directory. |
 
-The owner supplied official Playground/WHEP facts and references; this agent did not independently fetch them or exercise Ring. The owner-reported probe is not evidence available for this report because its redacted content was not supplied.
+---
 
-## E. M11/M11b fixes and limits
+## 4. Ring Evidence Status & Stage One Risk
 
-- M11 delivers Playground device selection, a devices-first redacting probe, and a separate receive-only WHEP server relay/client. The browser never receives the Playground token or upstream `Location`; the server validates bounded single-video SDP and the selected-device session path, rejects redirects, times out requests, and keeps at most one in-memory session for five minutes.
-- M11b fixed `prefer-const`, made Vitest hermetic against shell and dotenv `RING_*` settings, added fail-closed `fetch`/HTTP(S) guards for non-loopback traffic, and enables mock cleanup. Proof runs with plain `npm test`, fake inherited Ring variables, and a temporary fake dotenv file all pass 26/26 files and 137/137 tests.
-- Additional WHEP tests cover content/body bounds, foreign and wrong-device `Location`, auth/CSRF/rate limits, idempotent stop, expiry/shutdown, 401 state reset, ICE wait/cleanup, and no inbox events. Both WHEP routes set `Cache-Control: no-store` before auth/rate/body parsing; error and success paths are covered. The browser expiry timer is cleared when answer setup fails.
-- CSS no longer clips, rounds, filters, transforms, or overlays live video; it uses `object-fit: contain`. No real Ring frame was available, so actual watermark visibility remains a human-review item. The docs warn that no STUN/TURN server is configured but host ICE candidates/mDNS network identifiers may still be sent in SDP; no candidate filtering is implemented.
-- WHEP does not create inbox/History events. Tests verify this only with local mocks; they do not prove Ring media/API compatibility. The local simulator and mocked probe fixture remain synthetic.
+- **Redacted Probe Report Status:** **ABSENT** (`Ring evidence BLOCKER: no reviewed redacted probe report`).
+- **Blocked Functionality:** Event History parsing/ingestion, `ring_playground_recorded` persistence, and the Sync action remain intentionally disabled (HTTP 409).
+- **Stage One Assessment:** Stage One judging requires demonstrated runtime use of Ring technology (APIs, SDKs, simulators, or devices). In this candidate build:
+  - Ring API client, HMAC webhook validation, and WHEP live-view relay are fully implemented and hermetically tested with mocks.
+  - However, because no live Playground token was provided to this workspace, no real upstream request to `api.amazonvision.com` was made.
+  - **Risk:** If the owner submits without completing the 30-minute Playground probe and recording live video with the official Ring watermark, the submission risks failing Stage One pass/fail evaluation.
 
-## F. Visual, product-feedback, and publication evidence
+---
 
-No human browser review, real screenshot, gallery image, or video was made. jsdom tests and CSS inspection are not visual evidence. No product feedback was submitted; no firsthand Ring Playground/API feedback is justified, and no AWS service was used. Actual watermark visibility, accessibility/keyboard review, and the final clean-clone review remain owner tasks.
+## 5. Requirements Mapping Summary
 
-`LICENSE`'s placeholder remains `Copyright (c) 2026 [Copyright holder — confirm before publication]`; no legal identity or license decision was invented. The owner-supplied deadline is **Sat 24 Oct 2026 00:30 IST**; current Rules/FAQ and age eligibility were not independently verified. No visibility change, push, invitation, organizer contact, deployment, tunnel, paid resource, Devpost action, or submission was performed.
+- `submission/REQUIREMENTS_MAP.md` created with 8 mapped requirement categories.
+- Devpost hackathon rules: August 31, 2026 – October 23, 2026, 12:00 PM PDT (= October 24, 2026, 00:30 IST).
+- Primary Track: Ring.
+- Mini Challenges: Open Source selected (pending license holder confirmation); AWS Builder explicitly **NOT CLAIMED** (zero AWS calls in codebase).
+- Unverified/ambiguous items: Event History response envelope in Playground; inbound Token Exchange callback contract; 7-day expiration of GitHub private repository reviewer invitations.
 
-## G. Owner checklist — one sitting, approximately 30-minute Playground token
+---
 
-1. **Generate a fresh Playground token.** In the local ignored `.env`, set only the Ring entries `RING_ACCESS_TOKEN` and `RING_EVENT_SOURCE=ring_playground`; never paste the token into chat, command history, browser code, screenshots, logs, or recordings.
-2. **Verify API access.** Run `npm run dev`, sign in, open **Integration → Verify Playground API access**, and capture a success screenshot with no token, device identifier, or other secret visible.
-3. **Review the live view and simulator.** Choose a listed device; in Chrome or Edge start the Playground Live view, confirm video and the mandatory watermark, then Stop. Trigger Package, Vehicle, and Motion in the official Playground as directed by the owner; keep video distinct from an inbox/webhook event.
-4. **Run and review the probe.** Run `npm run ring:probe`; optionally set `RING_PROBE_PRINT_DEVICE_IDS=true` once for the local terminal only, never share that output, then set the deliberately selected `RING_HISTORY_DEVICE_ID` and rerun. Review the real output and share only the redacted report. Do not enable History ingestion or Sync until that report has been reviewed.
-5. **Complete owner-only release checks.** Confirm age eligibility, license/copyright holder, visibility, clean-clone/application of exports, human visual review/screenshots, English public video under 3:00, and the complete diff. Only after those reviews, separately authorize any fast-forward push, visibility action, owner-run invitations, or Devpost submission.
+## 6. Public Project Website Status
 
-If reviewer invitations are required, retain exactly `chris-trag`, `knmeiss`, `giolaq`, `anishamalde`, `mosesroth`, `emersonsklar`, and `testing@devpost.com`; invitations are owner-run and expire after 7 days per the supplied FAQ. No invitation was sent.
+- Architecture: Built as a standalone, dependency-free static showcase in `site/` (plain semantic HTML5, CSS3, vanilla JavaScript).
+- Includes: Hero section, problem vs solution, architecture SVG diagram, evidence truth table, judge local-run guide, and an interactive in-browser state-machine simulator.
+- Persistent Banner: *"Static preview with synthetic data — not the full application and not a live Ring connection"*.
+- Deployment Workflow: `.github/workflows/pages.yml` created with official actions (`actions/checkout@v4`, `actions/configure-pages@v5`, `actions/upload-pages-artifact@v3`, `actions/deploy-pages@v4`) and minimal permissions (`contents: read`, `pages: write`, `id-token: write`).
+- Local Test: Served locally on port 8085; verified HTTP 200, clean layout, mobile-first responsiveness (375x812), and zero console errors.
+- Target URL: `https://shoryapratapsinghchandrawat.github.io/doorway-relay/` (Expected, NOT verified until owner enables Pages in repository settings).
 
-## H. Git/export and stop status
+---
 
-All work stays on `arena/51d1d642-doorway-relay`. The final local M11b commit, final tree/base, patch series, consolidated patch, bundle, ZIP, sizes/SHA-256 hashes, and temporary-clone tree comparisons are recorded in `handoff/EXPORT_MANIFEST.md`. Exports are ignored and local only. No push, visibility change, invitation, deployment, organizer contact, or submission was run. No action beyond local code/docs/tests/commits/exports is authorized by this report; keep Event History ingestion and Sync disabled until the owner supplies a real redacted probe report.
+## 7. Demo Video Preparation Status
+
+- Script prepared: `submission/DEMO_SCRIPT.md` (timed shot breakdown under 2:50).
+- Screen walkthrough planned: `npm run dev` &rarr; demo sign-in &rarr; `npm run simulate:ring` &rarr; inbox triage &rarr; handoff lifecycle &rarr; activity audit &rarr; Integration status &rarr; receive-only WHEP live-view with watermark.
+- Strict provenance narration: Explains synthetic seed data, local simulation, and Playground sandbox.
+- Video Recording & Upload: **PENDING — owner to add**.
+
+---
+
+## 8. License & Legal Gate
+
+- `LICENSE` file currently contains placeholder: `Copyright (c) 2026 [Copyright holder — confirm before publication]`.
+- License Status: **BLOCKED** pending owner answers to the three legal questions.
+
+---
+
+## 9. Git Commits & Repository Cleanliness
+
+Commits on `release/devpost-submission` relative to `origin/main` (`28f9d2f`):
+1. `919083e` — `chore: import Doorway Relay workspace snapshot (patch sha256 78dd5b54...)`
+2. `d7b7a8f` — `fix(tooling): ensure cross-platform path resolution in vite, test, and scan scripts`
+3. `df8a69b` — `fix(config): enforce explicit ringEventSource and fail closed on production TOKEN_ENCRYPTION_KEY`
+4. `df6d69a` — `fix(auth): ensure Cache-Control no-store on all API routes, 401 CSRF reset, and ICE privacy boundary note`
+
+Repository Cleanliness Check:
+- Zero `.env` files tracked (only `.env.example`).
+- Zero `node_modules`, `dist`, `data/*.sqlite`, or `handoff` files tracked.
+- Zero `node-v22` or scratch scripts in repository worktree.
+- `scripts/secret-scan.mjs` reports 0 high-confidence matches.
+
+---
+
+## 10. Prioritized Owner Action Plan (Deadline: Fri 23 Oct 2026 12:00 PM PDT)
+
+1. **Answer Legal Gate Questions:**
+   - Legal copyright holder name.
+   - Confirm MIT license.
+   - Confirm repository visibility: Public with open-source license, or Private shared with Amazon reviewers (`chris-trag`, `knmeiss`, `giolaq`, `anishamalde`, `mosesroth`, `emersonsklar`, `testing@devpost.com`).
+2. **Execute Ring Playground Probe (One 30-Minute Sitting):**
+   - Generate access token in official Ring Developer Playground.
+   - Add `RING_ACCESS_TOKEN` and `RING_EVENT_SOURCE=ring_playground` to local ignored `.env`.
+   - Run `npm run ring:probe`, review the structure-only redacted report, and provide it if Event History adapter implementation is desired.
+3. **Record Demonstration Video:**
+   - Follow `submission/DEMO_SCRIPT.md` (< 2:50). Record at 1080p, ensure watermark is visible, hide secrets, and upload publicly to YouTube or Vimeo.
+   - Paste video link into `submission/DEVPOST_PASTE_READY.md`.
+4. **Approve Git Push:**
+   - Once legal questions are answered, issue explicit command: `"APPROVE PUSH"`.
+5. **Enable GitHub Pages:**
+   - In GitHub repository settings: *Settings &rarr; Pages &rarr; Source: GitHub Actions*.
+6. **Submit on Devpost:**
+   - Copy fields from `submission/DEVPOST_PASTE_READY.md` into the Devpost submission portal before the October 23, 12:00 PM PDT deadline.
