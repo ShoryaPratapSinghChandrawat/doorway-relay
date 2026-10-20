@@ -54,7 +54,7 @@ export type AppConfig = {
   ringClientId: string | null;
   ringClientSecret: string | null;
   ringHmacSigningKey: string | null;
-  ringEventSource: 'ring_live' | 'ring_playground';
+  ringEventSource: 'ring_live' | 'ring_playground' | null;
   ringApiBaseUrl: string;
   ringOauthBaseUrl: string;
   ringTokenUrl: string;
@@ -103,6 +103,9 @@ export function parseConfig(input: NodeJS.ProcessEnv | Record<string, string | u
     throw new Error('WEB_ORIGIN must be an origin without credentials, path, query, or fragment.');
   }
   if (env.NODE_ENV === 'production') {
+    if (env.RING_SIMULATOR_HMAC_KEY) {
+      throw new Error('Do not enable the local webhook simulator key in production.');
+    }
     if (webOriginUrl.protocol !== 'https:') {
       throw new Error('WEB_ORIGIN must use HTTPS in production.');
     }
@@ -121,6 +124,9 @@ export function parseConfig(input: NodeJS.ProcessEnv | Record<string, string | u
     if (env.RING_TOKEN_EXCHANGE_ROUTE_ENABLED) {
       throw new Error('RING_TOKEN_EXCHANGE_ROUTE_ENABLED must remain false in production until Ring confirms the inbound contract.');
     }
+    if (!env.TOKEN_ENCRYPTION_KEY || !/^[a-f0-9]{64}$/i.test(env.TOKEN_ENCRYPTION_KEY) || /replace|placeholder/i.test(env.TOKEN_ENCRYPTION_KEY)) {
+      throw new Error('TOKEN_ENCRYPTION_KEY must be configured as 64 hexadecimal characters (32 bytes) in production.');
+    }
   }
   if (/replace|placeholder/i.test(env.SESSION_SECRET)) {
     throw new Error('SESSION_SECRET is a placeholder. Set a random value in the ignored .env file.');
@@ -130,9 +136,6 @@ export function parseConfig(input: NodeJS.ProcessEnv | Record<string, string | u
   }
   if (env.RING_SIMULATOR_HMAC_KEY && /replace|placeholder|change/i.test(env.RING_SIMULATOR_HMAC_KEY)) {
     throw new Error('RING_SIMULATOR_HMAC_KEY is a placeholder. Set a random local-only value in the ignored .env file.');
-  }
-  if (env.NODE_ENV === 'production' && env.RING_SIMULATOR_HMAC_KEY) {
-    throw new Error('Do not enable the local webhook simulator key in production.');
   }
   if (env.RING_SIMULATOR_HMAC_KEY && env.RING_HMAC_SIGNING_KEY && env.RING_SIMULATOR_HMAC_KEY === env.RING_HMAC_SIGNING_KEY) {
     throw new Error('The simulator HMAC key must be different from the Ring HMAC signing key.');
@@ -152,7 +155,7 @@ export function parseConfig(input: NodeJS.ProcessEnv | Record<string, string | u
     ringClientId: env.RING_CLIENT_ID,
     ringClientSecret: env.RING_CLIENT_SECRET,
     ringHmacSigningKey: env.RING_HMAC_SIGNING_KEY,
-    ringEventSource: env.RING_EVENT_SOURCE ?? 'ring_live',
+    ringEventSource: env.RING_EVENT_SOURCE ?? null,
     ringApiBaseUrl,
     ringOauthBaseUrl,
     ringTokenUrl: ringTokenUrl.href,

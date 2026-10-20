@@ -48,7 +48,7 @@ export class PlaygroundStatusTracker {
     this.errorCode = code;
   }
 
-  read(token: string | null, eventSource: 'ring_live' | 'ring_playground'): PlaygroundStatusView {
+  read(token: string | null, eventSource: 'ring_live' | 'ring_playground' | null): PlaygroundStatusView {
     const tokenPresent = Boolean(token?.trim());
     let state: PlaygroundConnectionState;
     if (!tokenPresent) state = 'no_token';

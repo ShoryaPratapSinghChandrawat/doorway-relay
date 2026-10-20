@@ -22,7 +22,7 @@ interface RingStatus {
   refreshFailing: boolean;
   refreshError: string | null;
   simulatorConfigured: boolean;
-  eventSource: 'ring_live' | 'ring_playground';
+  eventSource: 'ring_live' | 'ring_playground' | null;
   note: string;
 }
 

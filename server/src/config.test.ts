@@ -47,7 +47,8 @@ describe('environment config validation', () => {
   });
 
   it('requires an explicit provenance label when Ring credentials or history configuration are present', () => {
-    expect(parseConfig({ SESSION_SECRET: session }).ringEventSource).toBe('ring_live');
+    expect(parseConfig({ SESSION_SECRET: session }).ringEventSource).toBeNull();
+    expect(parseConfig({ SESSION_SECRET: session, RING_EVENT_SOURCE: 'ring_live' }).ringEventSource).toBe('ring_live');
     expect(() => parseConfig({ SESSION_SECRET: session, RING_ACCESS_TOKEN: 'playground-token-test-only' }))
       .toThrow('Set RING_EVENT_SOURCE explicitly');
     expect(() => parseConfig({ SESSION_SECRET: session, RING_HISTORY_DEVICE_ID: 'device-test-only' }))
@@ -66,16 +67,21 @@ describe('environment config validation', () => {
       NODE_ENV: 'production',
       WEB_ORIGIN: 'https://relay.example.test',
       SESSION_SECRET: session,
+      TOKEN_ENCRYPTION_KEY: 'b'.repeat(64),
       DATABASE_PATH: '/var/lib/doorway-relay/doorway-relay.sqlite',
     };
     const config = parseConfig(base);
     expect(config.webOrigin).toBe('https://relay.example.test');
     expect(config.databasePath).toBe('/var/lib/doorway-relay/doorway-relay.sqlite');
+    expect(config.tokenEncryptionKey).toBe('b'.repeat(64));
 
     expect(() => parseConfig({ ...base, WEB_ORIGIN: 'http://relay.example.test' })).toThrow('HTTPS');
     expect(() => parseConfig({ ...base, WEB_ORIGIN: 'ftp://relay.example.test' })).toThrow('HTTP or HTTPS');
     expect(() => parseConfig({ ...base, WEB_ORIGIN: 'https://relay.example.test/app' })).toThrow('origin');
     expect(() => parseConfig({ ...base, SESSION_SECRET: 's'.repeat(32) })).toThrow('64 hexadecimal');
+    expect(() => parseConfig({ ...base, TOKEN_ENCRYPTION_KEY: undefined })).toThrow('TOKEN_ENCRYPTION_KEY');
+    expect(() => parseConfig({ ...base, TOKEN_ENCRYPTION_KEY: 'replace-with-64-hex-characters' })).toThrow('TOKEN_ENCRYPTION_KEY');
+    expect(() => parseConfig({ ...base, TOKEN_ENCRYPTION_KEY: 'c'.repeat(32) })).toThrow('TOKEN_ENCRYPTION_KEY');
     expect(() => parseConfig({ ...base, DATABASE_PATH: './data/app.sqlite' })).toThrow('absolute path');
     expect(() => parseConfig({ ...base, DATABASE_PATH: ':memory:' })).toThrow('absolute path');
     expect(() => parseConfig({ ...base, RING_API_BASE_URL: 'https://api.example.test' })).toThrow('official Ring API origin');

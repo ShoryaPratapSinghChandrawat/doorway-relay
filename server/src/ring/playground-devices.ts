@@ -56,7 +56,7 @@ export class PlaygroundDeviceSelection {
   private shapeUnrecognized = true;
   private selectedDeviceId: string | null = null;
 
-  synchronizeIdentity(token: string | null, source: 'ring_live' | 'ring_playground'): boolean {
+  synchronizeIdentity(token: string | null, source: 'ring_live' | 'ring_playground' | null): boolean {
     const tokenFingerprint = token ? createHash('sha256').update(token).digest('hex') : null;
     const nextIdentity = JSON.stringify([source, tokenFingerprint]);
     if (this.identityInitialized && this.identity === nextIdentity) return false;
