@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const environmentFilePath = (path) => {
-  const name = path.split('/').at(-1) ?? path;
+  const name = path.split(/[/\\]/).at(-1) ?? path;
   return name === '.env' || (name.startsWith('.env.') && name !== '.env.example');
 };
 

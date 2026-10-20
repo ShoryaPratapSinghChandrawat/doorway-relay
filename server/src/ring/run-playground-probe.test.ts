@@ -1,6 +1,6 @@
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runPlaygroundProbe } from './run-playground-probe.js';
 
@@ -51,7 +51,7 @@ describe('devices-first Playground probe', () => {
     expect(lines.join('\n')).toContain('devices only; no History request was made');
     expect(lines.join('\n')).not.toContain('opaque-device-id-secret');
 
-    const reportText = await readFile(join(outputDirectory, result.reportPath.split('/').at(-1)!), 'utf8');
+    const reportText = await readFile(join(outputDirectory, basename(result.reportPath)), 'utf8');
     expect(reportText).not.toContain('opaque-device-id-secret');
     expect(reportText).not.toContain('private-labeled-door');
     expect(reportText).not.toContain(token);

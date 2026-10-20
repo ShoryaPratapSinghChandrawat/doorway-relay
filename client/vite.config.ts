@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -10,7 +11,7 @@ if (!Number.isInteger(previewPort) || previewPort < 1 || previewPort > 65_535) {
 const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:3001';
 
 export default defineConfig({
-  root: new URL('.', import.meta.url).pathname,
+  root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [react(), tailwindcss()],
   server: {
     host: '0.0.0.0',
