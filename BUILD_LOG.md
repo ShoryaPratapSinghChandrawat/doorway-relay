@@ -611,3 +611,37 @@ The earlier full M11 suite, before M11b's hermetic setup and additional WHEP ass
 | Plain/fake-shell/fake-dotenv `npm test` isolation runs | Each passed **26/26 files, 137/137 tests**. The temporary fake dotenv file was removed. |
 
 The test suite prints a redacted **mock** probe report under a temporary directory; its fixture timestamp is not live evidence. Final `git diff --check`, relative-link/trailing-whitespace checks, post-commit secret-scan counts, final export sizes/hashes, and temporary-clone tree verification are recorded in `handoff/EXPORT_MANIFEST.md` after the M11b commit/export is complete. Do not interpret this log or the mocked suite as a real Playground success claim.
+
+## Release candidate import, bug fixes, and verification (2026-10-20 Windows environment)
+
+**Scope:** Inspection, clean import of workspace snapshot patch `01a14a79-0a9e-7419-8c33-2cd751d1d642.patch`, code review and platform/security defect fixes, and hermetic end-to-end verification. Work executed on branch `release/devpost-submission` branched from remote `origin/main` (`28f9d2f`). No external push, PR, deployment, or network write performed.
+
+### Patch Fingerprint & Import
+- Source patch: `01a14a79-0a9e-7419-8c33-2cd751d1d642.patch`. Size: 1,110,094 bytes. SHA-256: `78dd5b54f42f80fabc7177225efc2c400d1444f265ed780c60f734737f832ea7`. 19,568 lines, 130 `diff --git` entries. Matched expected identity exactly.
+- Applied cleanly via `git apply --index` onto base `28f9d2f` without conflicts. Committed as `chore: import Doorway Relay workspace snapshot (patch sha256 78dd5b54...)` (`919083e`).
+- Redacted Ring Playground probe report check: checked `fixtures/ring-playground/` and workspace. None found. Status recorded: `Ring evidence BLOCKER: no reviewed redacted probe report`. Event History parsing, `ring_playground_recorded`, and Sync remain blocked (HTTP 409).
+
+### Defects Found and Fixed
+1. **Windows Path Parsing in Vite Client (`client/vite.config.ts`):** `new URL('.', import.meta.url).pathname` produced leading slashes on Windows (`/C:/...`), causing bundle resolution failures. Replaced with `fileURLToPath(new URL('.', import.meta.url))`.
+2. **Path Separator in Probe Test (`server/src/ring/run-playground-probe.test.ts`):** Splitting report path strictly on `/` failed on Windows backslash paths. Switched to `path.basename`.
+3. **Secret Scan Regex Separator (`scripts/secret-scan.mjs`):** Updated `environmentFilePath` to split on `/[/\\]/` so `.env` detection works on Windows.
+4. **Config Ring Event Source Default & Production Token Encryption Key (`server/src/config.ts`):** Fixed `ringEventSource` to default strictly to `null` (never implicitly default to `ring_live`). Added fail-closed check for missing/placeholder/non-hex `TOKEN_ENCRYPTION_KEY` in `NODE_ENV === 'production'`. Added regression tests in `server/src/config.test.ts`.
+5. **API Cache-Control Header (`server/src/app.ts`):** Mounted `noStoreResponse` middleware across `/api` so all API responses include `Cache-Control: no-store`. Added regression assertions in `server/src/app.test.ts`.
+6. **Client CSRF Token Reset on 401 (`client/src/api.ts`):** Reset cached `csrfToken = null` on 401 response.
+7. **WHEP STUN/ICE Boundary Notice (`client/src/ring/PlaygroundLiveView.tsx`):** Clarified host candidate gathering privacy boundaries.
+
+### Verification Results (Node v22.22.3, npm 10.9.8)
+
+| Command / Check | Result |
+|---|---|
+| `npm ci --ignore-scripts` | Pass: 340 packages installed, 0 vulnerabilities. Prebuilt `better-sqlite3@13.0.3` binary loaded without local C++ toolchain. |
+| `npm run typecheck` | Pass: 0 errors (server and client TypeScript). |
+| `npm test` | Pass: **26/26 files, 137/137 tests**. |
+| `npm run lint` | Pass: ESLint 0 warnings (`--max-warnings=0`). |
+| `npm run build` | Pass: Vite 8.3.4 (dist/index.html 0.54 kB, CSS 32.19 kB, JS 354.49 kB). |
+| `npm audit --audit-level=moderate` | Pass: 0 vulnerabilities. |
+| `npm ls --depth=0` | Pass: all declared top-level packages resolve cleanly. |
+| SQLite Migration Idempotency & Demo Seed | Pass: Migrations 1-3 applied; second run reported already up to date; synthetic demo data seeded for 3 members. |
+| Ring Local Simulator & Persistence Across Restart | Pass: Signed local event sent to `/api/ring/webhook` returned HTTP 200 `accepted`; ingested into inbox with `ring_simulated` provenance; classified to handoff; server restarted; handoff and activity audit persisted. |
+| `node scripts/secret-scan.mjs` & `git diff --check` | Pass: 0 high-confidence matches; 0 trailing whitespace / CRLF diff issues. |
+| Clean-checkout clone in temp dir | Pass: `git clone` into temporary directory, ran `npm ci --ignore-scripts`, typecheck, test (137 tests), lint, build cleanly. |

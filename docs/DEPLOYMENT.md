@@ -61,4 +61,11 @@ A future real integration test requires (at minimum) a current documented and el
 5. Revalidate current Ring docs/rules, confirm eligible staging/simulator/device path and inbound Token Exchange contract, and use only a separately authorized real/official source.
 6. With browser tooling, perform real-browser visual, responsive, keyboard, accessibility, and proxy/TLS checks. M7 found no browser executable or Playwright/Puppeteer tooling; no screenshot or browser review was made.
 
+## Public Project Showcase Website Architecture Decision (GitHub Pages)
+
+- **Static-Only Hosting Constraint:** GitHub Pages provides static asset hosting over a CDN and cannot execute Node.js/Express processes or access SQLite databases.
+- **Showcase Architecture (`site/`):** A standalone, dependency-free static web showcase is placed in `site/` (plain semantic HTML5, CSS3, vanilla JavaScript). It features an interactive in-browser state-machine walkthrough running on in-memory synthetic fixture data with a persistent visible banner: *"Static preview with synthetic data — not the full application and not a live Ring connection"*.
+- **Workflow & Permissions:** Deployed exclusively via GitHub Actions (`.github/workflows/pages.yml`) using official actions (`actions/checkout`, `actions/configure-pages`, `actions/upload-pages-artifact`, `actions/deploy-pages`) with minimal permissions (`contents: read`, `pages: write`, `id-token: write`).
+- **Target URL:** `https://shoryapratapsinghchandrawat.github.io/doorway-relay/` (expected upon owner enabling Pages in repository settings).
+
 This readiness report does not authorize deployment, source publication, public HTTPS exposure, Ring account/app creation, a tunnel, or any paid resource.

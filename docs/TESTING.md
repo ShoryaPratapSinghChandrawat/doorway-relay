@@ -333,3 +333,20 @@ The earlier full M11 suite, before M11b's new hermetic/WHEP assertions, passed *
 The scoped secret heuristic is `node scripts/secret-scan.mjs`; final counts/scope are recorded with the handoff manifest. It scans tracked worktree files and reachable commit blobs only, omits environment-file paths, prints no matched values, and never traverses unreachable objects. It is not a dedicated scanner or proof of absence. Markdown-link, trailing-whitespace, diff, and bundle/patch checks are recorded in the final closeout section below after their final run.
 
 **Git reconciliation:** the actual M11b checkout was re-read as `HEAD=28f9d2f` with only `README.md` tracked; the application/docs snapshot was present in the worktree as untracked files. The expected `2b0fab5` commit object was unavailable. To preserve the existing snapshot, the required early checkpoint commit `44abdb6` (`feat(ring): playground device selection, probe devices mode, WHEP live view`) includes the full present tree (129 files changed). No reset, rebase, force, push, or unreachable-object inspection was used. The lockfile and `LICENSE` were included from the existing worktree snapshot and were not edited during M11b; the requested comparison against unavailable `2b0fab5` cannot be claimed. The lockfile has no M11b diff against checkpoint `44abdb6`.
+
+### Windows Release Candidate Verification (2026-10-20)
+
+| Command / Check | Environment | Result | Notes |
+|---|---|---|---|
+| `node --version && npm --version` | Windows x64 | Pass: `v22.22.3`, `10.9.8` | Complies strictly with package engines (`>=22.12 <23`). |
+| `npm ci --ignore-scripts` | Windows x64 | Pass: 340 packages, 0 vulnerabilities | Required on Windows without Visual Studio C++ toolchain; loads verified prebuilt `better-sqlite3@13.0.3` binary directly. |
+| `npm run typecheck` | Windows x64 | Pass | Zero TypeScript diagnostics across server and client projects. |
+| `npm test` | Windows x64 | Pass: **26/26 files, 137/137 tests** | Hermetic execution in ~11.5s; all WHEP fake-peer tests pass. |
+| `npm run lint` | Windows x64 | Pass | ESLint with `--max-warnings=0`. |
+| `npm run build` | Windows x64 | Pass | Vite client build (dist/index.html 0.54 kB, CSS 32.19 kB, JS 354.49 kB). |
+| `npm audit --audit-level=moderate` | Windows x64 | Pass | Found 0 vulnerabilities. |
+| `npm ls --depth=0` | Windows x64 | Pass | All declared direct dependencies present and clean. |
+| Migration idempotency & Demo Seed | Windows x64 | Pass | Applied 3 migrations to fresh temp SQLite file; second run reported up to date; synthetic demo data seeded for 3 members. |
+| Ring Local Simulator & Persistence | Windows x64 | Pass | Signed local event sent to `/api/ring/webhook` returned HTTP 200 `accepted`; ingested into inbox with `ring_simulated` provenance; classified to handoff; server restarted; handoff and activity audit persisted. |
+| `node scripts/secret-scan.mjs` & `git diff --check` | Windows x64 | Pass | 0 high-confidence matches; 0 trailing whitespace / CRLF diff issues. |
+| Clean-checkout clone in temp dir | Windows x64 | Pass | Cloned local branch to temp directory; `npm ci --ignore-scripts`, typecheck, test (137 tests), lint, build all passed. |

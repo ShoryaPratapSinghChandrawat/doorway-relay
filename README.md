@@ -12,6 +12,8 @@ Requirements: Node.js **22.12–22.x** and npm **10 or newer**. `better-sqlite3`
    npm ci
    ```
 
+   *(Windows note: if a local C++ compiler toolchain is absent, run `npm ci --ignore-scripts` to use the verified prebuilt `better-sqlite3` binary).*
+
 2. Create the ignored root `.env` from the template. Use the command for your shell:
 
    **PowerShell**
@@ -110,7 +112,7 @@ There is no production API start/build package, service/container definition, ap
 
 ## Submission and repository status
 
-This is not submission-ready. The supplied schedule and Devpost deadline have not been independently re-verified. No screenshots, public video, reviewer invitations, Ring evidence, or submission are claimed here. `LICENSE` remains unchanged pending the owner's copyright-holder and license choice. No push, visibility change, release, invitation, or Devpost publication was performed; publication requires separate owner authorization. See [`submission/FINAL_CHECKLIST.md`](submission/FINAL_CHECKLIST.md).
+This is not submission-ready. The supplied schedule and Devpost deadline have not been independently re-verified. No screenshots, public video, reviewer invitations, Ring evidence, or submission are claimed here. `LICENSE` remains unchanged pending the owner's copyright-holder and license choice (MIT template). The public project website ("Try it" link) is expected at `https://shoryapratapsinghchandrawat.github.io/doorway-relay/` once enabled in GitHub repository settings by the owner (currently pending deployment). No push, visibility change, release, invitation, or Devpost publication was performed; publication requires separate owner authorization. See [`submission/FINAL_CHECKLIST.md`](submission/FINAL_CHECKLIST.md).
 
 ## Project docs
 
