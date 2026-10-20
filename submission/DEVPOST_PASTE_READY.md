@@ -70,7 +70,8 @@ Doorway Relay transforms door events and manual tasks into structured, accountab
 
 ### "New & Existing" Projects Disclosure
 **How the project was significantly updated during the hackathon window:**  
-Doorway Relay was developed entirely within the official submission window (August 31, 2026 – October 23, 2026). The repository was initiated with an initial repository commit on GitHub (`28f9d2f`), and all architecture, domain logic, SQLite migrations, Ring adapter code, WHEP live-view relay, React client interface, and test suites were designed, authored, and verified locally during October 2026 as documented in the immutable Git commit history.
+[OWNER TO WRITE — REQUIRED BEFORE SUBMISSION]  
+*Note for owner: Because the Git history shows an import commit (`919083e`) onto the initial base (`28f9d2f`), you must write your own specific explanation here describing how the project was created and/or significantly updated between August 31, 2026 and October 23, 2026.*
 
 ---
 

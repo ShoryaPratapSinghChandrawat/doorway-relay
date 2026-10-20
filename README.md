@@ -4,7 +4,7 @@
 
 ## Start locally (Windows, macOS, or Linux)
 
-Requirements: Node.js **22.12–22.x** and npm **10 or newer**. `better-sqlite3` is a native dependency. Do not put Ring credentials in this local synthetic quick start.
+Requirements: Node.js **22.x** (`>=22.12 <23`) and npm **10 or newer**. **Node 24 is unsupported.** `better-sqlite3` is a native dependency. Do not put Ring credentials in this local synthetic quick start.
 
 1. Install the locked dependencies:
 

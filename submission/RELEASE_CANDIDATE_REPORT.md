@@ -71,8 +71,10 @@ No reviewed redacted probe report exists in the workspace (`Ring evidence BLOCKE
 - `submission/REQUIREMENTS_MAP.md` created with 8 mapped requirement categories.
 - Devpost hackathon rules: August 31, 2026 – October 23, 2026, 12:00 PM PDT (= October 24, 2026, 00:30 IST).
 - Primary Track: Ring.
-- Mini Challenges: Open Source selected (pending license holder confirmation); AWS Builder explicitly **NOT CLAIMED** (zero AWS calls in codebase).
-- Unverified/ambiguous items: Event History response envelope in Playground; inbound Token Exchange callback contract; 7-day expiration of GitHub private repository reviewer invitations.
+- Mini Challenges: Open Source is **MET** (finalized MIT license held by Shorya Pratap Singh Chandrawat on public repository); AWS Builder explicitly **NOT CLAIMED** (zero AWS calls in codebase).
+- New & Existing: **PARTIAL (Owner Action Required)**: Because the Git history shows an import commit (`919083e`) onto the initial base (`28f9d2f`), the explanation of how the project was significantly updated during the hackathon window must be written by the owner (placeholder added in `submission/DEVPOST_PASTE_READY.md`).
+- Reviewers: The Rules and FAQ pages list the Amazon reviewer accounts `knmeiss`, `giolaq`, `anishamalde`, `mosesroth`, `emersonsklar` and the Devpost email `testing@devpost.com`. Because the repository is confirmed public, collaboration invitations are not required.
+- Unverified/ambiguous items: Event History response envelope in Playground; inbound Token Exchange callback contract.
 
 ---
 
@@ -98,8 +100,11 @@ No reviewed redacted probe report exists in the workspace (`Ring evidence BLOCKE
 
 ## 8. License & Legal Gate
 
-- `LICENSE` file currently contains placeholder: `Copyright (c) 2026 [Copyright holder — confirm before publication]`.
-- License Status: **BLOCKED** pending owner answers to the three legal questions.
+- Copyright holder confirmed by owner: **Shorya Pratap Singh Chandrawat**.
+- License confirmed by owner: **MIT License**.
+- Repository visibility confirmed by owner: **PUBLIC** with MIT license.
+- [LICENSE](file:///C:/Games/projects/doorway-relay/LICENSE) is finalized with `Copyright (c) 2026 Shorya Pratap Singh Chandrawat`.
+- License Status: **RESOLVED & CLEARED**.
 
 ---
 
@@ -110,6 +115,9 @@ Commits on `release/devpost-submission` relative to `origin/main` (`28f9d2f`):
 2. `d7b7a8f` — `fix(tooling): ensure cross-platform path resolution in vite, test, and scan scripts`
 3. `df8a69b` — `fix(config): enforce explicit ringEventSource and fail closed on production TOKEN_ENCRYPTION_KEY`
 4. `df6d69a` — `fix(auth): ensure Cache-Control no-store on all API routes, 401 CSRF reset, and ICE privacy boundary note`
+5. `ac5561d` — `docs: reconcile verification records, deployment architecture, and requirements mapping`
+6. `26492f3` — `feat(site): add standalone static showcase with in-browser simulator and GitHub Pages workflow`
+7. `ea1a1c8` — `docs(submission): finalize paste-ready devpost form, demo script, and release candidate report`
 
 Repository Cleanliness Check:
 - Zero `.env` files tracked (only `.env.example`).
@@ -121,11 +129,9 @@ Repository Cleanliness Check:
 
 ## 10. Prioritized Owner Action Plan (Deadline: Fri 23 Oct 2026 12:00 PM PDT)
 
-1. **Answer Legal Gate Questions:**
-   - Legal copyright holder name.
-   - Confirm MIT license.
-   - Confirm repository visibility: Public with open-source license, or Private shared with Amazon reviewers (`chris-trag`, `knmeiss`, `giolaq`, `anishamalde`, `mosesroth`, `emersonsklar`, `testing@devpost.com`).
-2. **Execute Ring Playground Probe (One 30-Minute Sitting):**
+1. **Write "New & Existing" Disclosure in `submission/DEVPOST_PASTE_READY.md`:**
+   - Complete the `[OWNER TO WRITE]` placeholder with your explanation of how the project was created and updated between August 31, 2026 and October 23, 2026.
+2. **Execute Ring Playground Probe (One 30-Minute Sitting, Optional but Recommended):**
    - Generate access token in official Ring Developer Playground.
    - Add `RING_ACCESS_TOKEN` and `RING_EVENT_SOURCE=ring_playground` to local ignored `.env`.
    - Run `npm run ring:probe`, review the structure-only redacted report, and provide it if Event History adapter implementation is desired.
@@ -133,7 +139,7 @@ Repository Cleanliness Check:
    - Follow `submission/DEMO_SCRIPT.md` (< 2:50). Record at 1080p, ensure watermark is visible, hide secrets, and upload publicly to YouTube or Vimeo.
    - Paste video link into `submission/DEVPOST_PASTE_READY.md`.
 4. **Approve Git Push:**
-   - Once legal questions are answered, issue explicit command: `"APPROVE PUSH"`.
+   - Issue explicit command: `"APPROVE PUSH"`.
 5. **Enable GitHub Pages:**
    - In GitHub repository settings: *Settings &rarr; Pages &rarr; Source: GitHub Actions*.
 6. **Submit on Devpost:**
